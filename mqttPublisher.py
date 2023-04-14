@@ -1,9 +1,7 @@
 import paho.mqtt.client as paho, os
 import urllib.parse as urlparse
-import keyboard
 import time
-import random
-from enum import Enum
+from sense_hat import SenseHat
 
 # Define event callbacks
 def on_connect(mqttc, obj, flags, rc):
@@ -38,8 +36,8 @@ tempTopic = topic + 'temperature'
 humTopic = topic + 'humidity'
 presTopic = topic + 'pressure'
 
-mqttc.username_pw_set('wioomzqz', "E7AFAC-lUlUB")
-mqttc.connect('m20.cloudmqtt.com', 10889)
+#mqttc.username_pw_set('wioomzqz', "E7AFAC-lUlUB")
+mqttc.connect('192.168.0.81', 8000)
 
 mqttc.subscribe(topic, 0)
 mqttc.publish(topic, 'Getting started ...')
@@ -47,23 +45,16 @@ mqttc.publish(topic, 'Getting started ...')
 # Continue the loop; exit if an error occurs
 rc = 0
 message = ''
+sense = SenseHat()
+while (1):   
+    mqttc.loop(timeout=1)
+    time.sleep(1)
 
-while (rc == 0):   
-    rc = mqttc.loop(.2)
-    time.sleep(0.5)
+    mqttc.publish(tempTopic, f'temperature {(sense.temperature)}')
 
-    dataToSend = random.randint(1,3)
-    dataValue = random.randint(25, 35)
-    match dataToSend:
-        case 1:
-            print("temperature")
-            mqttc.publish(tempTopic, f'temperature {dataValue}')
-        case 2:
-            print("humidity")
-            mqttc.publish(humTopic, f'humidity {dataValue}')
-        case 3:
-            print("pressure")
-            mqttc.publish(presTopic, f'pressure {dataValue}')
+    mqttc.publish(humTopic, f'humidity {sense.humidity}')
+
+    mqttc.publish(presTopic, f'pressure {sense.pressure}')
     
     # keypressed = keyboard.read_key()
     # if keypressed == 'esc':
