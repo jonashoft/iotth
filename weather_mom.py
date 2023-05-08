@@ -1,8 +1,8 @@
 from flask import Flask
 import paho.mqtt.client as paho, os
-
-
-
+from pymongo import MongoClient
+import datetime
+import json
 
 
 #Create a client instance
@@ -26,14 +26,19 @@ class MQTTClient():
         self.mqttc.connect(host,port)
         self.mqttc.loop_start()
         self.mqttc.subscribe(tempTopic, 0)
+        self.mqttc.subscribe(humTopic, 0)
+        self.mqttc.subscribe(presTopic, 0)
     
 
     def on_connect(self,mqttc, obj, flags, rc):
         print("flags, rc: " + str(flags) + " " + str(rc))
 
     def on_message(self,mqttc, obj, msg):
-        print("Recieved message: " + msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
-        self.temperature.append(msg.payload)
+        collection = msg.topic.split('/')[-1] 
+        document = json.loads(msg.payload)
+        db[collection].insert_one(document) 
+        #self.temperature.append(msg.payload)
+        #print(document)
         
 
     def on_subscribe(self,mqttc, obj, msg_id, granted_qos):
@@ -41,6 +46,10 @@ class MQTTClient():
 
 
 mqtt = MQTTClient('192.168.0.81', 8000)
+
+mongo_client =  MongoClient("localhost", 27017)
+db = mongo_client.WeatherStation
+
 
 
 app = Flask(__name__)
@@ -51,13 +60,33 @@ def index():
 
 @app.route('/weather/temperature')
 def temperature():
-    #Do code
-    return str(mqtt.temperature[-1])
+    documents = []
+    cursor = db.temperature.find({},{'_id': False})
+    list_cur = list(cursor)
+    json_data = json.dumps(list_cur)
+    
+    return json_data
+    #return str(mqtt.temperature[-1])
 
 @app.route('/weather/humidity')
 def humidity():
     #Do code
-    return 'Humidity is 90%'
+    documents = []
+    cursor = db.humidity.find({},{'_id': False})
+    list_cur = list(cursor)
+    json_data = json.dumps(list_cur)
+    
+    return json_data
+
+@app.route('/weather/pressure')
+def pressure():
+    documents = []
+    cursor = db.pressure.find({},{'_id': False})
+    list_cur = list(cursor)
+    json_data = json.dumps(list_cur)
+
+    return json_data
+
 if __name__ == '__main__':
     
 
