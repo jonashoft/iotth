@@ -1,0 +1,2 @@
+sudo mosquitto -c mosquitto.conf -v
+sudo systemctl start mongod
