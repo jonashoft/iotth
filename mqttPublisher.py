@@ -2,6 +2,8 @@ import paho.mqtt.client as paho, os
 import urllib.parse as urlparse
 import time
 from sense_hat import SenseHat
+import json
+
 
 # Define event callbacks
 def on_connect(mqttc, obj, flags, rc):
@@ -50,21 +52,12 @@ while (1):
     mqttc.loop(timeout=1)
     time.sleep(10)
 
-    mqttc.publish(tempTopic, f'temperature {(sense.temperature)}')
+    mqttc.publish(tempTopic, json.dumps({"temperature" : sense.temperature,"timestamp":time.time()}))
 
-    mqttc.publish(humTopic, f'humidity {sense.humidity}')
+    mqttc.publish(humTopic, json.dumps({"humidity" : sense.humidity,"timestamp":time.time()}))
 
-    mqttc.publish(presTopic, f'pressure {sense.pressure}')
+    mqttc.publish(presTopic, json.dumps({"pressure" : sense.pressure,"timestamp":time.time()}))
     
-    # keypressed = keyboard.read_key()
-    # if keypressed == 'esc':
-    #     print("fuck frede")
-    #     message = input('message >> ')
-    #     if (message != ''):
-    #         mqttc.publish(topic, message)
-        
-    # if (topic == 'exit') and (message == 'exit'):
-    #     break
     
 print("rc: " + str(rc))
 
