@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 import paho.mqtt.client as paho, os
 from pymongo import MongoClient
 import datetime
@@ -50,18 +50,30 @@ mqtt = MQTTClient('192.168.0.81', 8000)
 mongo_client =  MongoClient("localhost", 27017)
 db = mongo_client.WeatherStation
 
+def create__date_query(date):
+    if date:
+        datetimeObj = datetime.datetime.strptime(date, "%Y-%m-%d")
+        timestamp = datetime.datetime.timestamp(datetimeObj)
+        query = {"$and" : [{"timestamp" : {"$gte" : timestamp}},{"timestamp" : {"$lt" : timestamp+(24*60*60)}}]}
+    else:
+        query = {}
 
+    return query
 
 app = Flask(__name__)
 
-@app.route('/')
+@app.route('/weather')
 def index():
-    return 'Hej Verden'
+    temp_dates = list(set([datetime.datetime.fromtimestamp(x).strftime("%Y-%m-%d") for x in list(db.temperature.distinct("timestamp"))]))
+    pres_dates = list(set([datetime.datetime.fromtimestamp(x).strftime("%Y-%m-%d") for x in list(db.pressure.distinct("timestamp"))]))
+    hum_dates = list(set([datetime.datetime.fromtimestamp(x).strftime("%Y-%m-%d") for x in list(db.humidity.distinct("timestamp"))]))
+    return {"temperature" : temp_dates, "pressure" : pres_dates, "humidity" : hum_dates}
 
 @app.route('/weather/temperature')
 def temperature():
-    documents = []
-    cursor = db.temperature.find({},{'_id': False})
+    date = request.args.get("date")
+    query = create__date_query(date)
+    cursor = db.temperature.find(query,{'_id': False})
     list_cur = list(cursor)
     json_data = json.dumps(list_cur)
     
@@ -70,9 +82,9 @@ def temperature():
 
 @app.route('/weather/humidity')
 def humidity():
-    #Do code
-    documents = []
-    cursor = db.humidity.find({},{'_id': False})
+    date = request.args.get("date")
+    query = create__date_query(date)
+    cursor = db.humidity.find(query,{'_id': False})
     list_cur = list(cursor)
     json_data = json.dumps(list_cur)
     
@@ -80,8 +92,9 @@ def humidity():
 
 @app.route('/weather/pressure')
 def pressure():
-    documents = []
-    cursor = db.pressure.find({},{'_id': False})
+    date = request.args.get("date")
+    query = create__date_query(date)
+    cursor = db.pressure.find(query,{'_id': False})
     list_cur = list(cursor)
     json_data = json.dumps(list_cur)
 

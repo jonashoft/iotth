@@ -48,7 +48,7 @@ message = ''
 sense = SenseHat()
 while (1):   
     mqttc.loop(timeout=1)
-    time.sleep(1)
+    time.sleep(10)
 
     mqttc.publish(tempTopic, f'temperature {(sense.temperature)}')
 
