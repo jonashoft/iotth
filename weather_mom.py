@@ -45,7 +45,7 @@ class MQTTClient():
         print("Subscribed: " + str(msg_id) + " " + str(granted_qos))
 
 
-mqtt = MQTTClient('192.168.0.81', 8000)
+mqtt = MQTTClient('192.168.0.184', 8000)
 
 mongo_client =  MongoClient("localhost", 27017)
 db = mongo_client.WeatherStation
